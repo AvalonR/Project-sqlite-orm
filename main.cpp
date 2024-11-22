@@ -1,6 +1,13 @@
 #include <iostream>
 #include <sqlite_orm/sqlite_orm.h>
+
 using namespace std;
+
+struct Book {
+    int id, author_id;
+    string title, genre;
+    bool is_borrowed{};
+};
 
 struct BorrowRecord
 {

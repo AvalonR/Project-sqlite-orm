@@ -1,3 +1,3 @@
-A:/C++/Project-sqlite-orm/cmake-build-debug/CMakeFiles/Project-sqlite-orm.dir
-A:/C++/Project-sqlite-orm/cmake-build-debug/CMakeFiles/edit_cache.dir
-A:/C++/Project-sqlite-orm/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/shellyfourer/Desktop/programming/Project-sqlite-orm/cmake-build-debug/CMakeFiles/Project.dir
+/Users/shellyfourer/Desktop/programming/Project-sqlite-orm/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/shellyfourer/Desktop/programming/Project-sqlite-orm/cmake-build-debug/CMakeFiles/rebuild_cache.dir
