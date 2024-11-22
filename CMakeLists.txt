@@ -1,11 +1,12 @@
-cmake_minimum_required(VERSION 3.29)
-project(Project)
+cmake_minimum_required(VERSION 3.16)
+project(mysql_connector)
 
 set(CMAKE_CXX_STANDARD 20)
 
-# Find and link sqlite3 package
-find_package(unofficial-sqlite3 CONFIG REQUIRED)
+include_directories(C:/dev/vcpkg/installed/x64-windows/include)
+link_directories(C:/dev/vcpkg/installed/x64-windows/lib)
 
-# Add your executable and link sqlite3
-add_executable(Project main.cpp)
-target_link_libraries(Project PRIVATE unofficial::sqlite3::sqlite3)
+# Déclarez votre exécutable
+add_executable(mysql_connector main.cpp)
+
+target_link_libraries(mysql_connector PRIVATE sqlite3)
