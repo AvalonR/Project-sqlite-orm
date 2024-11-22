@@ -27,7 +27,7 @@ struct BorrowRecord {
 
 int main() {
     using namespace sqlite_orm;
-
+int x;
 
     auto storage = make_storage(
             "library.db",
