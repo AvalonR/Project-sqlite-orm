@@ -31,6 +31,15 @@ int main() {
 
     auto storage = make_storage(
             "library.db",
+
+            make_table(
+                    "Book",
+                    make_column("id", &Book::id, primary_key()),
+                    make_column("author_id", &Book::author_id),
+                    make_column("title", &Book::title),
+                    make_column("genre", &Book::genre),
+                    make_column("is_borrowed", &Book::is_borrowed)
+            ),
             make_table(
                     "author",
                     make_column("id", &author::id, primary_key()),
