@@ -8,18 +8,15 @@ struct Book {
     string title, genre;
     bool is_borrowed{};
 };
-
-struct author {
+struct Author {
     int id;
     string name;
 };
-
-struct borrower {
+struct Borrower {
     int id;
     string name;
     string email;
 };
-
 struct BorrowRecord {
     int id{}, book_id{}, borrower_id{};
     string borrow_date, return_date;
@@ -27,28 +24,42 @@ struct BorrowRecord {
 
 int main() {
     using namespace sqlite_orm;
-int x;
+
 
     auto storage = make_storage(
             "library.db",
+
             make_table(
-                    "author",
-                    make_column("id", &author::id, primary_key()),
-                    make_column("name", &author::name)
+               "Author",
+               make_column("id", &Author::id, primary_key()),
+               make_column("name", &Author::name)
+       ),
+            make_table(
+                    "Book",
+                    make_column("id", &Book::id, primary_key()),
+                    make_column("author_id", &Book::author_id), //Explicit foreign key
+                    make_column("title", &Book::title),
+                    make_column("genre", &Book::genre),
+                    make_column("is_borrowed", &Book::is_borrowed),
+                    foreign_key(&Book::author_id).references(&Author::id)
+            ),
+
+            make_table(
+                    "Borrower",
+                    make_column("id", &Borrower::id, primary_key()),
+                    make_column("name", &Borrower::name),
+                    make_column("email", &Borrower::email)
             ),
             make_table(
-                    "borrower",
-                    make_column("id", &borrower::id, primary_key()),
-                    make_column("name", &borrower::name),
-                    make_column("email", &borrower::email)
-            ),
-            make_table(
+                //Junction table (many-to-many relationship, connects to borrower and book)
                     "BorrowRecord",
                     make_column("id", &BorrowRecord::id, primary_key()),
                     make_column("book_id", &BorrowRecord::book_id),  // Fixed "book id" to "book_id"
                     make_column("borrower_id", &BorrowRecord::borrower_id),
                     make_column("borrow_date", &BorrowRecord::borrow_date),
-                    make_column("return_date", &BorrowRecord::return_date)
+                    make_column("return_date", &BorrowRecord::return_date),
+                    foreign_key(&BorrowRecord::book_id).references(&Book::id),
+                    foreign_key(&BorrowRecord::borrower_id).references(&Borrower::id)
             )
     );
 
