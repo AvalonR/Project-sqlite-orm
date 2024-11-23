@@ -17,10 +17,70 @@ struct Borrower {
     string name;
     string email;
 };
+
 struct BorrowRecord {
     int id{}, book_id{}, borrower_id{};
     string borrow_date, return_date;
 };
+
+void AddBook(auto & storage ){
+    Book book;
+    cout<< "end the the Book id : "<<endl;
+    cin>>book.id;
+    cout<< "end the the author id : "<<endl;
+    cin>>book.author_id;
+    cout<< "end the the Book title  : "<<endl;
+    cin.ignore();
+    getline(cin, book.title);
+    cout << "Enter Genre: ";
+    getline(cin, book.genre);
+    book.is_borrowed = false;
+}
+void listBooks(auto& storage) {
+    cout << "\n/ID/TITLE/AUTHOR_ID/GENRE/BORROWED/\n";
+    cout << "--------------------------------------\n";
+    for (const auto& book : storage.template get_all<Book>()) {
+        cout << book.id << " | " << book.title << " | " << book.author_id
+             << " | " << book.genre << " | " << (book.is_borrowed ? "Yes" : "No") << "\n";
+        cout << "--------------------------------------\n";
+    }
+}
+void updateBook(auto& storage) {
+    int id;
+    cout << "Enter the ID of the book to update: ";
+    cin >> id;
+
+    if (auto book = storage.template get_pointer<Book>(id)) {
+        cout << "Enter new title (current: " << book->title << "): ";
+        cin.ignore();
+        getline(cin, book->title);
+
+        cout << "Enter new genre (current: " << book->genre << "): ";
+        getline(cin, book->genre);
+
+        cout << "Enter new Author ID (current: " << book->author_id << "): ";
+        cin >> book->author_id;
+
+        storage.update(*book);
+        cout << "Book updated successfully!\n";
+    } else {
+        cout << "Book not found!\n";
+    }
+}
+
+
+void deleteBook(auto& storage) {
+    int id;
+    cout << "Enter the ID of the book to delete: ";
+    cin >> id;
+
+    if (storage.template remove<Book>(id)) {
+        cout << "Book deleted successfully!\n";
+    } else {
+        cout << "Book not found!\n";
+    }
+}
+
 
 int main() {
     using namespace sqlite_orm;
