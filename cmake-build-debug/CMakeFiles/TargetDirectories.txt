@@ -1,3 +1,0 @@
-C:/Users/AdMin/CLionProjects/sqlite_connector/cmake-build-debug/CMakeFiles/mysql_connector.dir
-C:/Users/AdMin/CLionProjects/sqlite_connector/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/AdMin/CLionProjects/sqlite_connector/cmake-build-debug/CMakeFiles/rebuild_cache.dir
