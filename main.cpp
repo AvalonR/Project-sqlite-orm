@@ -23,24 +23,28 @@ struct BorrowRecord {
     int id{}, book_id{}, borrower_id{};
     string borrow_date, return_date;
 };
+
 auto setup_database () {
     auto storage = make_storage(
         "library.db",
+        //Parent Table
         make_table(
             "Author",
             make_column("id", &Author::id, primary_key()),
             make_column("name", &Author::name)
         ),
+        //Child Table (for Author table)
         make_table(
             "Book",
             make_column("id", &Book::id, primary_key()),
-            make_column("author_id", &Book::author_id),
+            make_column("author_id", &Book::author_id), //Explicit foreign key
             make_column("title", &Book::title),
             make_column("genre", &Book::genre),
             make_column("is_borrowed", &Book::is_borrowed),
             foreign_key(&Book::author_id)
             .references(&Author::id)
-            .on_delete.cascade() //Enables casacde delete
+            .on_delete.cascade() //Enables CASCADE delete (Author is deleted, all books will be deleted as well)
+            .on_update.restrict_() //does not allow the author ID to be updated
         ),
         make_table(
         "Borrower",
@@ -48,6 +52,8 @@ auto setup_database () {
         make_column("name", &Borrower::name),
         make_column("email", &Borrower::email)
         ),
+
+        //Junction table (many-to-many relationship, connects to borrower and book)
         make_table(
         "BorrowRecord",
         make_column("id", &BorrowRecord::id, primary_key()),
@@ -57,10 +63,12 @@ auto setup_database () {
         make_column("return_date", &BorrowRecord::return_date),
         foreign_key(&BorrowRecord::book_id)
         .references(&Book::id)
-        .on_delete.cascade(), //enables cascade delete
+        .on_delete.cascade() //enables CASCADE delete, when a book is deleted, the borrow record for that book will be deleted as well
+        .on_update.cascade(), //enables CASCADE update, when book ID is updated, the book ID in borrow records will be updated as well
         foreign_key(&BorrowRecord::borrower_id)
         .references(&Borrower::id)
-        .on_delete.cascade() //enabbles cascade delete
+        .on_delete.cascade() //enables CASCADE delete, deleting a borrower, will delete the borrowers borrow record
+        .on_update.restrict_() //does not allow the borrower ID to be updated
         )
     );
     // Sync the schema
@@ -109,7 +117,7 @@ void addBook(auto& storage)
     getline(cin, book.title);
     cout << "Enter Genre: ";
     getline(cin, book.genre);
-    book.is_borrowed = false;
+    //book.is_borrowed = false;
 }
 void listBooks(auto& storage)
 {
@@ -128,7 +136,7 @@ void updateBook(auto& storage)
     cout << "Enter the ID of the book to update: ";
     cin >> id;
 
-    if (auto book = storage.template get_pointer<Book>(id))
+    /*if (auto book = storage.template get_pointer<Book>(id))
     {
         cout << "Enter new title (current: " << book->title << "): ";
         cin.ignore();
@@ -147,6 +155,7 @@ void updateBook(auto& storage)
     {
         cout << "Book not found!\n";
     }
+    */
 }
 void deleteBook(auto& storage)
 {
@@ -154,7 +163,7 @@ void deleteBook(auto& storage)
     cout << "Enter the ID of the book to delete: ";
     cin >> id;
 
-    if (storage.template remove<Book>(id))
+    /*if (storage.template remove<Book>(id))
     {
         cout << "Book deleted successfully!\n";
     }
@@ -162,6 +171,7 @@ void deleteBook(auto& storage)
     {
         cout << "Book not found!\n";
     }
+    */
 }
 void bookActions_switch(auto& storage) {
     int choice;
@@ -182,7 +192,6 @@ void bookActions_switch(auto& storage) {
                 deleteBook(storage);
             break;
             case 4:
-                cout << " \nGoodbye!";
             return;
             default:
                 cout
@@ -191,15 +200,15 @@ void bookActions_switch(auto& storage) {
     }
 }
 
+
 int main() {
 
     enable_foreign_keys();
     auto storage = setup_database();
 
-
     int choice;
     while (true) {
-        cout << "\n Virtual Library: ";
+        cout << "\nVirtual Library: ";
         cout << " \n1. Enter as borrower: ";
         cout << " \n2. Enter as employee: ";
         cout << " \n3. Exit: " <<endl;
