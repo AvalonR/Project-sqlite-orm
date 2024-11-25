@@ -96,7 +96,8 @@ void enable_foreign_keys () {
         cerr << "Failed to open database." << endl;
     }
 }
-void AddBook(auto& storage)
+
+void addBook(auto& storage)
 {
     Book book;
     cout << "end the the Book id : " << endl;
@@ -162,40 +163,60 @@ void deleteBook(auto& storage)
         cout << "Book not found!\n";
     }
 }
+void bookActions_switch(auto& storage) {
+    int choice;
+    while (true) {
+        cout << "1. Add Book" << endl;
+        cout << "2. Update Book" << endl;
+        cout << "3. Delete Book" << endl;
+        cout << "4. Exit" << endl;
+        cin >> choice;
+        switch (choice) {
+            case 1:
+                addBook(storage);
+            break;
+            case 2:
+                updateBook(storage);
+            break;
+            case 3:
+                deleteBook(storage);
+            break;
+            case 4:
+                cout << " \nGoodbye!";
+            return;
+            default:
+                cout
+            << " Invalid Choice!";
+        }
+    }
+}
 
 int main() {
 
     enable_foreign_keys();
     auto storage = setup_database();
 
-    // Insert sample data
-    auto author_id = storage.insert(Author{0, "George Orwell"});
-    storage.insert(Book{0, author_id, "1984", "Dystopian", false});
-    storage.insert(Book{0, author_id, "Animal Farm", "Satire", false});
 
-    std::cout << "Before deleting author:\n";
-    for (const auto& book : storage.get_all<Book>())
-    {
-        std::cout << "Book: " << book.title << "\n";
-    }
-    for (const auto& author : storage.get_all<Author>())
-    {
-        std::cout << "Author: " << author.name << " | " << author.id << "\n";
-    }
-    cout << "------------------------------\n";
-    storage.remove<Author>(1);
-    cout << "------------------------------\n";
-    auto remaining_books = storage.get_all<Book>();
-    if (remaining_books.empty())
-    {
-        std::cout << "All books by the deleted author were also deleted (ON DELETE CASCADE).\n";
-    }
-    else
-    {
-        for (const auto& book : remaining_books)
-        {
-            std::cout << "Book: " << book.title << "\n";
+    int choice;
+    while (true) {
+        cout << "\n Virtual Library: ";
+        cout << " \n1. Enter as borrower: ";
+        cout << " \n2. Enter as employee: ";
+        cout << " \n3. Exit: " <<endl;
+        cin >> choice;
+        switch (choice) {
+            case 1:
+            break;
+            case 2:
+                listBooks(storage);
+                bookActions_switch(storage);
+            break;
+            case 3:
+                cout << " \nGoodbye!";
+            return 0;
+            default:
+                cout
+            << " Invalid Choice!";
         }
     }
-    return 0;
 }
