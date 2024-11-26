@@ -117,7 +117,9 @@ void addBook(auto& storage)
     getline(cin, book.title);
     cout << "Enter Genre: ";
     getline(cin, book.genre);
-    //book.is_borrowed = false;
+    book.is_borrowed = false;
+    storage.insert(book); // Saving the book to the database
+    cout << "Book added successfully!" << endl;
 }
 void listBooks(auto& storage)
 {
@@ -136,7 +138,7 @@ void updateBook(auto& storage)
     cout << "Enter the ID of the book to update: ";
     cin >> id;
 
-    /*if (auto book = storage.template get_pointer<Book>(id))
+    if (auto book = storage.template get_pointer<Book>(id))
     {
         cout << "Enter new title (current: " << book->title << "): ";
         cin.ignore();
@@ -155,23 +157,29 @@ void updateBook(auto& storage)
     {
         cout << "Book not found!\n";
     }
-    */
+
 }
-void deleteBook(auto& storage)
-{
+void deleteBook(auto& storage) {
     int id;
     cout << "Enter the ID of the book to delete: ";
     cin >> id;
 
-    /*if (storage.template remove<Book>(id))
-    {
-        cout << "Book deleted successfully!\n";
+    try {
+        // First check if the book exists
+        storage.template get<Book>(id);
+
+        // If no exception, proceed to delete
+        storage.template remove<Book>(id);
+
+        cout << "Book deleted successfully!" << endl;
+    } catch (const std::system_error& e) {
+        // Handle the case where the book does not exist
+        if (std::string(e.what()).find("not found") != std::string::npos) {
+            cout << "The book was not found." << endl;
+        } else {
+            throw; // Re-throw unexpected exceptions
+        }
     }
-    else
-    {
-        cout << "Book not found!\n";
-    }
-    */
 }
 void bookActions_switch(auto& storage) {
     int choice;
