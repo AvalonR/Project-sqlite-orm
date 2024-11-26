@@ -11,20 +11,17 @@ struct Book
     string title, genre;
     bool is_borrowed{};
 };
-
 struct Author
 {
     int id;
     string name;
 };
-
 struct Borrower
 {
     int id;
     string name;
     string email;
 };
-
 struct BorrowRecord
 {
     int id{}, book_id{}, borrower_id{};
@@ -86,7 +83,6 @@ auto setup_database()
     cout << "Database schema initialized successfully!" << endl;
     return storage;
 }
-
 void enable_foreign_keys()
 {
     // Enable foreign keys using raw SQLite API
@@ -132,8 +128,8 @@ void addAuthor(auto& storage)
     cin.ignore();
     getline(cin, author.name);
     storage.template insert(author);
+    listAuthors(storage);
 }
-
 void listAuthors_n_Books(auto& storage)
 {
     cout << "List of All Authors and their Books:" << endl;
@@ -162,16 +158,22 @@ void listAuthors_n_Books(auto& storage)
         cout << endl; // Blank line after each author
     }
 }
-
 void listAuthors(auto& storage)
 {
-    cout << "List of All Authors" << endl;
-    for (const auto& author : storage.template get_all<Author>())
+    if (storage.template count<Author>() == 0)
     {
-        cout << "Author: " << author.id << " | " << author.name << endl;
+        cout << "No authors found." << endl;
+        addAuthor(storage);
+    }
+    else
+    {
+        cout << "List of All Authors" << endl;
+        for (const auto& author : storage.template get_all<Author>())
+        {
+            cout << "Author: " << author.id << " | " << author.name << endl;
+        }
     }
 }
-
 void deleteAuthor(auto& storage)
 {
     int choice_for_deletion;
@@ -202,29 +204,34 @@ void addBook(auto& storage)
         cout << "Error: Author with ID " << book.author_id << " does not exist. Please add the author first.\n";
         addAuthor(storage);
     }
-    book.author_id = 1 + storage.template count<Book>();
-    cin.ignore();
-    cout << "Enter the Book Title: " << endl;
-    getline(cin, book.title);
-    cout << "Enter the Book Genre: " << endl;
-    getline(cin, book.genre);
-    book.is_borrowed = false;
-    storage.insert(book); // Saving the book to the database
-    cout << "Book added successfully!" << endl;
-}
-
-void listBooks(auto& storage)
-{
-    cout << "\n/ID/TITLE/AUTHOR_ID/GENRE/BORROWED/\n";
-    cout << "--------------------------------------\n";
-    for (const auto& book : storage.template get_all<Book>())
+    else
     {
-        cout << book.id << " | " << book.title << " | " << book.author_id
-            << " | " << book.genre << " | " << (book.is_borrowed ? "Yes" : "No") << "\n";
-        cout << "--------------------------------------\n";
+        cout << "Enter the Book Title: " << endl;
+        cin.ignore();
+        getline(cin, book.title);
+        cout << "Enter the Book Genre: " << endl;
+        getline(cin, book.genre);
+        book.is_borrowed = false;
+        storage.insert(book); // Saving the book to the database
+        cout << "Book added successfully!" << endl;
+        listBooks(storage);
     }
 }
+void listBooks(auto& storage)
+{
+    cout << "\nList of Books:\n";
+    cout << "--------------------------------\n";
+    cout << "ID\t| Title\n";
+    cout << "--------------------------------\n";
 
+    for (const auto& book : storage.template get_all<Book>())
+    {
+        cout << book.id << "\t| " << book.title << "\n";
+    }
+
+    cout << "--------------------------------\n";
+}
+//int listspecificBook(auto& storage){} // this function has to show the specific information about the book !!!!!!!
 void updateBook(auto& storage)
 {
     int id;
@@ -250,8 +257,7 @@ void updateBook(auto& storage)
     {
         cout << "Book not found!\n";
     }
-}
-
+} //we do not have to make the user enter the ID again, this has to be edited
 void deleteBook(auto& storage)
 {
     int id;
@@ -280,38 +286,106 @@ void deleteBook(auto& storage)
             throw; // Re-throw unexpected exceptions
         }
     }
-}
+} //same here, no need to call for the ID
 
-void bookActions_switch(auto& storage)
-{
+void Employee_switch(auto&storage) {
     int choice;
-    while (true)
-    {
-        cout << "1. Add Book" << endl;
-        cout << "2. Update Book" << endl;
-        cout << "3. Delete Book" << endl;
-        cout << "4. Exit" << endl;
+    while (true) {
+        cout << "\n1. List all books: ";
+        cout << "\n2. List all authors: ";
+        cout << "\n3. Back: " <<endl;
         cin >> choice;
-        switch (choice)
-        {
-        case 1:
-            addBook(storage);
+        switch (choice) {
+            case 1:
+                bookEmployee_switch(storage);
             break;
-        case 2:
-            updateBook(storage);
-            break;
-        case 3:
-            deleteBook(storage);
-            break;
-        case 4:
-            return;
-        default:
-            cout
-                << " Invalid Choice!";
+            case 2:
+                authorEmployee_switch(storage);
+                break;
+            case 3:
+                return;
+            default:
+                cout << "Invalid Choice!";
         }
     }
 }
 
+void bookEmployee_switch(auto&storage) {
+    listBooks(storage);
+    int choice;
+    while (true) {
+        cout << "\n1. Pick book by ID: ";
+        cout << "\n2. Add book: ";
+        cout << "\n3. Back: " << endl;
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                //listspecificBooks(storage);
+                bookActions_switch(storage);
+                break;
+            case 2:
+                addBook(storage);
+                break;
+            case 3:
+                return;
+            default:
+                cout << "Invalid Choice!";
+        }
+    }
+}
+void bookActions_switch(auto& storage)
+{
+
+    int choice;
+    while (true)
+    {
+        cout << "1. Update Book" << endl;
+        cout << "2. Delete Book" << endl;
+        cout << "3. Back" << endl;
+        cin >> choice;
+        switch (choice)
+        {
+            case 1:
+                updateBook(storage);
+            break;
+            case 2:
+                deleteBook(storage);
+            break;
+            case 3:
+                return;
+            default:
+                cout
+                    << " Invalid Choice!";
+        }
+    }
+}
+
+void authorEmployee_switch(auto&storage) {
+    listAuthors(storage);
+    int choice;
+    while (true) {
+        cout << "\n1. See books by Author: ";
+        cout << "\n2. Add Author: ";
+        cout << "\n3. Delete Author: ";
+        cout << "\n4. Back: ";
+        cin >> choice;
+        switch (choice) {
+            case 1:
+                break;
+            case 2:
+                addAuthor(storage);
+            break;
+            case 3:
+                deleteAuthor(storage);
+            break;
+            case 4:
+                return;
+            default:
+                cout << "Invalid Choice!";
+        }
+    }
+}
 
 int main()
 {
@@ -319,27 +393,24 @@ int main()
     auto storage = setup_database();
 
     int choice;
-    while (true)
-    {
+    while (true) {
         cout << "\nVirtual Library: ";
-        cout << " \n1. Enter as borrower: ";
-        cout << " \n2. Enter as employee: ";
+        cout << " \n1. Enter as Employee: ";
+        cout << " \n2. Enter as Borrower: ";
         cout << " \n3. Exit: " << endl;
         cin >> choice;
-        switch (choice)
-        {
-        case 1:
+        switch (choice) {
+            case 1:
+                Employee_switch(storage);
             break;
-        case 2:
-            listBooks(storage);
-            bookActions_switch(storage);
-            break;
-        case 3:
-            cout << " \nGoodbye!";
+            case 2:
+                break;
+            case 3:
+                cout << " \nGoodbye!";
             return 0;
-        default:
-            cout
-                << " Invalid Choice!" << endl;
+            default:
+                cout
+            << " Invalid Choice!";
         }
     }
 }
