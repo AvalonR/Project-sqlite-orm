@@ -175,7 +175,7 @@ void listAuthors(auto& storage)
 void deleteAuthor(auto& storage)
 {
     int choice_for_deletion;
-    listAuthors_n_Books(storage, 2);
+    listAuthors(storage);
     cout << "Choose the Author for deletion:" << endl;
     cin >> choice_for_deletion;
     storage.template remove<Author>(choice_for_deletion);
