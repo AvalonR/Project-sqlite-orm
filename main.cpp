@@ -127,8 +127,22 @@ void enable_foreign_keys()
     }
 }
 
+void clear_screen()
+{
+#ifdef _WIN32
+    system("cls");  // For Windows
+#elif __linux__ || __APPLE__ || __MACH__
+    system("clear");  // For Linux and macOS
+#elif __unix__ || __posix__
+    system("clear");  // For other Unix-like systems
+#else
+    std::cout << "\033[2J\033[1;1H";  // ANSI escape sequence for most terminals
+#endif
+}
+
 //displays
 void display_main_menu() {
+    clear_screen();
     cout << "\n===================================";
     cout << "\n      LIBRARY MANAGEMENT SYSTEM    ";
     cout << "\n===================================";
@@ -138,6 +152,7 @@ void display_main_menu() {
     cout << "\n>> ";
 }
 void display_employee_menu() {
+    clear_screen();
     cout << "\n===================================";
     cout << "\n          EMPLOYEE MENU            ";
     cout << "\n===================================";
@@ -149,6 +164,7 @@ void display_employee_menu() {
     cout << "\n>> ";
 }
 void display_author_management_menu() {
+    clear_screen();
     cout << "\n===================================";
     cout << "\n        AUTHOR MANAGEMENT          ";
     cout << "\n===================================";
@@ -158,6 +174,7 @@ void display_author_management_menu() {
     cout << "\n>> ";
 }
 void display_borrower_management_menu() {
+    clear_screen();
     cout << "\n===================================";
     cout << "\n       BORROWER MANAGEMENT         ";
     cout << "\n===================================";
@@ -168,6 +185,7 @@ void display_borrower_management_menu() {
     cout << "\n>> ";
 }
 void display_borrower_menu() {
+    clear_screen();
     cout << "\n===================================";
     cout << "\n          BORROWER MENU            ";
     cout << "\n===================================";
@@ -182,6 +200,7 @@ void display_borrower_menu() {
 
 //switches
 void Employee_switch(auto&storage) {
+    clear_screen();
     int choice;
     while (true) {
         display_employee_menu();
@@ -206,6 +225,7 @@ void Employee_switch(auto&storage) {
     }
 }
 void authorEmployee_switch(auto&storage) {
+    clear_screen();
     int choice;
     while (true) {
         display_author_management_menu();
@@ -216,7 +236,19 @@ void authorEmployee_switch(auto&storage) {
             break;
             case 2:
                 listAuthor_their_books(storage);
-            break;
+            int choice2;
+            while (true) {
+                cout << "\n[1] Go Back to Author Management Menu";
+                cout <<"\n>> ";
+                cin >> choice2;
+                switch (choice2) {
+                    case 1:
+                        authorEmployee_switch(storage);
+                    break;
+                    default:
+                        cout << "\nInvalid Choice, try again" << endl;
+                }
+            }
             case 3:
                 return;
             default:
@@ -227,6 +259,7 @@ void authorEmployee_switch(auto&storage) {
 void bookEmployee_switch(auto&storage) {
     listspecificBook(storage);
     bookActions_switch(storage);
+    clear_screen();
 }
 void bookActions_switch(auto& storage)
 {
@@ -259,6 +292,7 @@ void bookActions_switch(auto& storage)
 
 //Actions with authors
 void listAuthors(auto& storage) {
+        clear_screen();
         const int authors_per_page = 5;
         auto authors = storage.template get_all<Author>();
         int total_authors = authors.size();
@@ -291,8 +325,10 @@ void listAuthors(auto& storage) {
             cin >> choice;
 
             if (tolower(choice) == 'n' && current_page < total_pages) {
+                clear_screen();
                 current_page++;
             } else if (tolower(choice) == 'p' && current_page > 1) {
+                clear_screen();
                 current_page--;
             } else if (tolower(choice) == 'd' && current_page > 0) {
                 deleteAuthor(storage);
@@ -307,6 +343,7 @@ void listAuthors(auto& storage) {
     }
 void listAuthor_their_books(auto& storage)
 {
+    clear_screen();
     int s_author_id;
     cout << "\nEnter the Author ID: " << endl;
     cin >> s_author_id;
@@ -350,7 +387,7 @@ void addAuthor(auto& storage)
     cin.ignore();
     getline(cin, author.name);
     storage.template insert(author);
-    listAuthors(storage);
+
 }
 void deleteAuthor(auto& storage)
 {
@@ -361,7 +398,6 @@ void deleteAuthor(auto& storage)
     if (!storage.template count<Author>(where(c(&Author::id) == choice_for_deletion)))
     {
         cout << "The Author with ID (" << choice_for_deletion << ") was Deleted Successfully" << endl;
-        listAuthors(storage);
     }
     else
     {
@@ -371,7 +407,9 @@ void deleteAuthor(auto& storage)
 
 //Actions with books
 void listBooks(auto& storage) {
+    clear_screen();
     const int books_per_page = 5;
+    ;
     auto books = storage.template get_all<Book>();
     int total_books = books.size();
     int total_pages = (total_books + books_per_page - 1) / books_per_page;
@@ -402,8 +440,10 @@ void listBooks(auto& storage) {
         cin >> choice;
 
         if (tolower(choice) == 'n' && current_page < total_pages) {
+            clear_screen();
             current_page++;
         } else if (tolower(choice) == 'p' && current_page > 1) {
+            clear_screen();
             current_page--;
         } else if (tolower(choice) == 'd' && current_page > 0) {
             bookEmployee_switch(storage);
@@ -442,6 +482,7 @@ void listspecificBook(auto& storage) {
 }
 void addBook(auto& storage)
 {
+    clear_screen();
     Book book;
     book.id = 1 + storage.template count<Book>();
     cout << "Enter the Author ID: " << endl;
