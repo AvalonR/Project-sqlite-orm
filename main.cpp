@@ -3,6 +3,10 @@
 #include <sqlite_orm/sqlite_orm.h>
 #include <cstdlib>
 #include <iomanip>
+#include <chrono>
+#include <optional>
+#include <string>
+#include <ncurses.h>
 
 using namespace std;
 using namespace sqlite_orm;
@@ -28,11 +32,14 @@ struct Borrower
     string name;
     string email;
 };
-struct BorrowRecord
-{
-    int id{}, book_id{}, borrower_id{};
-    string borrow_date, return_date;
+struct BorrowRecord {
+    int id;
+    int book_id;
+    int borrower_id;  // id of the borrower
+    string borrow_date;  // timestamps  of when the book was borrowed
+     std::optional<std::string> return_date;  // Nullable return date
 };
+
 
 //sqlite-database
 auto setup_database()
@@ -126,7 +133,6 @@ void enable_foreign_keys()
         cerr << "Failed to open database." << endl;
     }
 }
-
 void clear_screen()
 {
 #ifdef _WIN32
@@ -142,7 +148,6 @@ void clear_screen()
 
 //displays
 void display_main_menu() {
-    clear_screen();
     cout << "\n===================================";
     cout << "\n      LIBRARY MANAGEMENT SYSTEM    ";
     cout << "\n===================================";
@@ -152,19 +157,16 @@ void display_main_menu() {
     cout << "\n>> ";
 }
 void display_employee_menu() {
-    clear_screen();
     cout << "\n===================================";
     cout << "\n          EMPLOYEE MENU            ";
     cout << "\n===================================";
     cout << "\n[1] Manage Authors";
     cout << "\n[2] Manage Books";
     cout << "\n[3] Manage Borrowers";
-    cout << "\n[4] Search Engine";
-    cout << "\n[5] Return to Main Menu";
+    cout << "\n[4] Return to Main Menu";
     cout << "\n>> ";
 }
 void display_author_management_menu() {
-    clear_screen();
     cout << "\n===================================";
     cout << "\n        AUTHOR MANAGEMENT          ";
     cout << "\n===================================";
@@ -174,7 +176,6 @@ void display_author_management_menu() {
     cout << "\n>> ";
 }
 void display_borrower_management_menu() {
-    clear_screen();
     cout << "\n===================================";
     cout << "\n       BORROWER MANAGEMENT         ";
     cout << "\n===================================";
@@ -185,22 +186,18 @@ void display_borrower_management_menu() {
     cout << "\n>> ";
 }
 void display_borrower_menu() {
-    clear_screen();
     cout << "\n===================================";
     cout << "\n          BORROWER MENU            ";
     cout << "\n===================================";
-    cout << "\n[1] View ALL Available Books ";
-    cout << "\n[2] Search FOR a Book";
-    cout << "\n[3] Borrow a Book";
-    cout << "\n[4] Return a Book";
-    cout << "\n[5] View Borrowing History";
-    cout << "\n[6] Return to Main Menu";
+    cout << "\n[1] Borrow a Book";
+    cout << "\n[2] Return a Book";
+    cout << "\n[3] View Borrowing History";
+    cout << "\n[4] Return to Main Menu";
     cout << "\n>> ";
 }
 
 //switches
 void Employee_switch(auto&storage) {
-    clear_screen();
     int choice;
     while (true) {
         display_employee_menu();
@@ -216,16 +213,13 @@ void Employee_switch(auto&storage) {
                 listBorrowers(storage);
             break;
             case 4:
-            break;
-            case 5:
-                return;
+                display_main_menu();
             default:
                 cout << "\nInvalid Choice, try again" << endl;
         }
     }
 }
 void authorEmployee_switch(auto&storage) {
-    clear_screen();
     int choice;
     while (true) {
         display_author_management_menu();
@@ -259,7 +253,6 @@ void authorEmployee_switch(auto&storage) {
 void bookEmployee_switch(auto&storage) {
     listspecificBook(storage);
     bookActions_switch(storage);
-    clear_screen();
 }
 void bookActions_switch(auto& storage)
 {
@@ -288,11 +281,58 @@ void bookActions_switch(auto& storage)
         }
     }
 }
-
+void Borrower_switch(auto& storage, int id_choice) {
+    int choice;
+    while (true) {
+        display_borrower_menu();
+        cin >> choice;
+        switch (choice) {
+            case 1:
+                borrowBook(storage, id_choice);
+            break;
+            case 2:
+                returnBook(storage, id_choice);
+            break;
+            case 3:
+                showbookrecordforuser(storage, id_choice);
+            break;
+            case 4:
+                return;
+            default:
+                cout << "\nInvalid Choice, try again" << endl;
+            break;
+        }
+    }
+}
+void enterBorrower_switch(auto& storage) {
+    cout << "\n===================================";
+    cout << "\n          BORROWER MENU            ";
+    cout << "\n===================================";
+    cout << "\n[1] Add Borrower";
+    cout << "\n[2] Enter as Existing Borrower";
+    cout << "\n[3] Return to Main Menu";
+    cout << "\n>> ";
+    int choice;
+    while (true) {
+        cin >> choice;
+        switch (choice) {
+            case 1:
+                addBorrower(storage);
+                enter_as_Borrower(storage);
+            break;
+            case 2:
+                enter_as_Borrower(storage);
+            break;
+            case 3:
+                return;
+            default:
+                cout << "\nInvalid Choice, try again" << endl;
+        }
+    }
+}
 
 //Actions with authors
 void listAuthors(auto& storage) {
-        clear_screen();
         const int authors_per_page = 5;
         auto authors = storage.template get_all<Author>();
         int total_authors = authors.size();
@@ -301,6 +341,7 @@ void listAuthors(auto& storage) {
 
         if (total_authors == 0) {
             cout << "\nNo Authors Found in the Library" << endl;
+            addAuthor(storage);
             return;
         }
 
@@ -318,23 +359,24 @@ void listAuthors(auto& storage) {
                 cout << author.id << "\t| " << author.name << "\n";
             }
             cout << "===================================";
-            cout << "\n[N] Next Page | [P] Previous Page | [D] Delete Author | [A] Add Author | [E] Exit";
+            cout << "\n[N] Next Page | [P] Previous Page "
+                    "\n[1] Delete Author "
+                    "\n[2] Add Author "
+                    "\n[3] Exit";
             cout << "\n>> ";
 
             char choice;
             cin >> choice;
 
             if (tolower(choice) == 'n' && current_page < total_pages) {
-                clear_screen();
                 current_page++;
             } else if (tolower(choice) == 'p' && current_page > 1) {
-                clear_screen();
                 current_page--;
-            } else if (tolower(choice) == 'd' && current_page > 0) {
+            } else if (tolower(choice) == '1' && current_page > 0) {
                 deleteAuthor(storage);
-            } else if (tolower(choice) == 'a' && current_page > 0) {
+            } else if (tolower(choice) == '2' && current_page > 0) {
                 addAuthor(storage);
-            } else if (tolower(choice) == 'e') {
+            } else if (tolower(choice) == '3') {
                 break;
             } else {
                 cout << "\nInvalid choice. Please try again.\n";
@@ -343,7 +385,6 @@ void listAuthors(auto& storage) {
     }
 void listAuthor_their_books(auto& storage)
 {
-    clear_screen();
     int s_author_id;
     cout << "\nEnter the Author ID: " << endl;
     cin >> s_author_id;
@@ -407,7 +448,6 @@ void deleteAuthor(auto& storage)
 
 //Actions with books
 void listBooks(auto& storage) {
-    clear_screen();
     const int books_per_page = 5;
     ;
     auto books = storage.template get_all<Book>();
@@ -417,6 +457,7 @@ void listBooks(auto& storage) {
 
     if (total_books == 0) {
         cout << "\nNo Books Found in the Library" << endl;
+        addBook(storage);
         return;
     }
     while (true) {
@@ -433,23 +474,24 @@ void listBooks(auto& storage) {
             cout << book.id << "\t| " << book.title << "\n";
         }
         cout << "===================================";
-        cout << "\n[N] Next Page | [P] Previous Page | [D] Pick Book By ID | [A] Add Book  [E] Exit";
+        cout << "\n[N] Next Page | [P] Previous Page "
+                "\n[1] Pick Book By ID"
+                "\n[2] Add Book"
+                "\n[3] Exit";
         cout << "\n>> ";
 
         char choice;
         cin >> choice;
 
         if (tolower(choice) == 'n' && current_page < total_pages) {
-            clear_screen();
             current_page++;
         } else if (tolower(choice) == 'p' && current_page > 1) {
-            clear_screen();
             current_page--;
-        } else if (tolower(choice) == 'd' && current_page > 0) {
+        } else if (tolower(choice) == '1' && current_page > 0) {
             bookEmployee_switch(storage);
-        }else if (tolower(choice) == 'a' && current_page > 0) {
+        }else if (tolower(choice) == '2' && current_page > 0) {
             addBook(storage);
-        } else if (tolower(choice) == 'e') {
+        } else if (tolower(choice) == '3') {
             break;
         } else {
             cout << "\nInvalid choice. Please try again.\n";
@@ -482,7 +524,6 @@ void listspecificBook(auto& storage) {
 }
 void addBook(auto& storage)
 {
-    clear_screen();
     Book book;
     book.id = 1 + storage.template count<Book>();
     cout << "Enter the Author ID: " << endl;
@@ -624,42 +665,223 @@ void enter_as_Borrower(auto& storage)
     cin >> id_choice;
     if (storage.template count<Borrower>(where(c(&Borrower::id) == id_choice)))
     {
-        listBooks(storage);
-        //borrow_a_book - function, which allows the user to choose from either the list called above or just call it inside
-        cout << "valid id";
+        cout << "Valid ID";
+        Borrower_switch(storage, id_choice);
     }
     else
     {
+        int choice;
         cout << "Invalid ID" << endl;
+        cout << endl << "Would you like to choose from the list given before [1] or create a new borrower [2]" << endl;
+        cin >> choice;
+        if (choice == 1)
+        {
+            enter_as_Borrower(storage);
+        }
+        else if (choice == 2)
+        {
+            addBorrower(storage);
+            enter_as_Borrower(storage);
+        }
+        else
+        {
+            cout << "Invalid choice" << endl;
+        }
     }
 }
 
-
-void Borrower_switch (auto& storage) {
-    int choice;
-    while (true) {
-        listBorrowers(storage);
-        cout << "\n1. Choose User";
-        cout << "\n2. Delete Borrower";
-        cout << "\n3. Add Borrower";
-        cout << "\n4. Back";
-        cout << "\nChoose an option: ";
-        cin >> choice;
-        switch (choice) {
-            case 1:
-                enter_as_Borrower(storage);
-                break;
-            case 2:
-                deleteBorrower(storage);
+//borrower actions
+void borrowBook(auto& storage, int borrower_id_choice) {
+    auto books = storage.template get_all<Book>();
+    bool anyAvailable = false;
+    for (const auto& book : books) {
+        if (!book.is_borrowed) {
+            anyAvailable = true;
             break;
-            case 3:
-                addBorrower(storage);
-            break;
-            case 4:
-                return;
-            dafault:
-            cout << "\nInvalid Choice, try again" << endl;
         }
+    }
+    if (!anyAvailable) {
+        cout << "\nNo Available Books to Borrow" << endl;
+        return;
+    }
+
+    listavailablebooks(storage);
+    int chosenBookID;
+    cout << "\nInput ID of the Book you Want to Borrow";
+    cout <<"\n>> ";
+    cin >> chosenBookID;
+
+    // Check if the book exists
+    auto book_ptr = storage.template get_pointer<Book>(chosenBookID);
+    if (!book_ptr) {
+        cout << "\nInvalid Book ID. Please try again";
+        return;
+    }
+
+    //pointer to access the book object
+    auto& book = *book_ptr;
+
+    // Record the borrow action
+    auto now = std::chrono::system_clock::now();
+    auto now_in_time_t = std::chrono::system_clock::to_time_t(now);  // Convert to time_t
+    // Convert to tm struct to extract date components
+    std::tm* local_time = std::localtime(&now_in_time_t);
+
+    // Format the time as a date-only string (YYYY-MM-DD)
+    char borrow_date[11];  // Size for "YYYY-MM-DD" format
+    std::strftime(borrow_date, sizeof(borrow_date), "%Y-%m-%d", local_time);
+
+    //Create new borrow record
+    BorrowRecord newRecord;
+    newRecord.book_id = chosenBookID;
+    newRecord.borrow_date = borrow_date;  // Store the formatted date as a string
+    newRecord.return_date = std::nullopt;  //Set return date to nullopt (indicating not returned)
+    newRecord.id = 1 + storage.template count<BorrowRecord>();
+    newRecord.borrower_id = borrower_id_choice;
+    storage.insert(newRecord);
+
+    //Update the borrowed status
+    book.is_borrowed = true;
+    storage.template update<Book>(book);
+
+    // Get borrower info
+    auto borrower = storage.template get_pointer<Borrower>(borrower_id_choice);
+    if (borrower) {
+        cout << "The book '" << book.title << "' was successfully borrowed by "
+             << borrower->name << " on " << borrow_date << endl;
+    }
+}
+void listavailablebooks(auto& storage) {
+
+    cout << "\n===================================\n";
+    cout << "      AVAILABLE BOOKS             \n";
+    cout << "===================================\n";
+
+    auto books = storage.template get_all<Book>();
+    for (const auto& book : books) {
+        if (book.is_borrowed == false)
+        {
+            cout << "Book ID: " << book.id << ", Title: " << book.title << "\n";
+        }
+    }
+}
+void listborrowedbooks(auto& storage, int borrower_id_choice)
+{
+    cout << "\n===================================\n";
+    cout << "      BORROWED BOOKS             \n";
+    cout << "===================================\n";
+
+    // Get all borrow records and filter by borrower_id
+    auto borrowRecords = storage.template get_all<BorrowRecord>();
+    bool found = false;
+
+    for (const auto& record : borrowRecords) {
+        if (record.borrower_id == borrower_id_choice && !record.return_date.has_value()) {
+            // Get the book associated with this borrow record
+            auto book_ptr = storage.template get_pointer<Book>(record.book_id);
+            if (book_ptr) {
+                cout << "Book ID: " << book_ptr->id << ", Title: " << book_ptr->title << "\n";
+                found = true;
+            }
+        }
+    }
+
+    if (!found) {
+        cout << "No borrowed books for this borrower." << endl;
+    }
+}
+void returnBook(auto& storage, int borrower_id_choice)
+{
+    auto books = storage.template get_all<Book>();
+    bool anyBorrowed = false;
+    for (const auto& book : books) {
+        if (book.is_borrowed) {
+            anyBorrowed = true;
+            break;
+        }
+    }
+    if (!anyBorrowed) {
+        cout << "\nNo Books Borrowed" << endl;
+        return;
+    }
+
+    listborrowedbooks(storage, borrower_id_choice);
+    int chosenBookID;
+    cout << "\nInput the ID of Book you Want to Return";
+    cout << "\n>> ";
+    cin >> chosenBookID;
+
+    auto book_ptr = storage.template get_pointer<Book>(chosenBookID);
+    if (!book_ptr) {
+        cout << "\nInvalid Book ID. Please try again" << endl;
+        return;
+    }
+
+    //pointer to access the book object
+    auto& book = *book_ptr;
+
+    //Find the associated borrow record with return_date is null
+    auto borrowRecords = storage.template get_all<BorrowRecord>();
+    BorrowRecord* borrowRecord = nullptr;
+
+    //find the matching one
+    for (auto& record : borrowRecords) {
+        if (record.book_id == chosenBookID && !record.return_date.has_value()) {
+            borrowRecord = &record;
+            break;
+        }
+    }
+
+    //If no borrow record is found
+    if (!borrowRecord) {
+        cout << "\nNo Active Borrow Record Found for This Book" << endl;
+        return;
+    }
+
+    // Record the return action
+    auto now = std::chrono::system_clock::now();
+    auto now_in_time_t = std::chrono::system_clock::to_time_t(now);  //Convert to time_t
+    std::tm* local_time = std::localtime(&now_in_time_t);  //Convert to tm struct to extract date components
+
+    //Format the time as a date-only string (YYYY-MM-DD)
+    std::stringstream return_date_stream;
+    return_date_stream << std::put_time(local_time, "%Y-%m-%d");  //Format as YYYY-MM-DD
+
+    std::string return_date = return_date_stream.str();  //Store the formatted date as a string
+
+    //Update the borrow record with the return date
+    borrowRecord->return_date = return_date;
+
+    //Update the borrow record in the storage
+    storage.update(*borrowRecord);
+
+    //update book's status
+    book.is_borrowed = false;
+    storage.template update<Book>(book);
+
+    cout << "\nBook returned successfully on " << return_date << endl;
+}
+void showbookrecordforuser(auto& storage, int borrower_id_choice) {
+    cout << "\n===================================\n";
+    cout << "     BOOK RECORD FOR A USER        \n";
+    cout << "===================================\n";
+
+    auto borrowRecords = storage.template get_all<BorrowRecord>(
+        where(c(&BorrowRecord::borrower_id) == borrower_id_choice));
+
+    if (borrowRecords.empty()) {
+        cout << "No records found for the borrower with ID " << borrower_id_choice << ".\n";
+        return;
+    }
+
+    cout << "Borrow Records for Borrower ID " << borrower_id_choice << ":\n";
+    for (const auto& record : borrowRecords) {
+        cout << "Record ID: " << record.id
+             << ", Book ID: " << record.book_id
+             << ", Borrow Date: " << record.borrow_date
+             << ", Return Date: "
+             << (record.return_date ? *record.return_date : "Not returned yet")
+             << "\n";
     }
 }
 
@@ -667,7 +889,6 @@ int main()
     {
         enable_foreign_keys();
         auto storage = setup_database();
-
 
         int choice;
         while (true) {
@@ -678,7 +899,7 @@ int main()
                     Employee_switch(storage);
                 break;
                 case 2:
-                    Borrower_switch(storage);
+                    enterBorrower_switch(storage);
                 break;
                 case 3:
                     cout << "\nGoodbye!";
