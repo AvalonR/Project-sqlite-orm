@@ -1,12 +1,11 @@
-cmake_minimum_required(VERSION 3.16)
-project(mysql_connector)
+cmake_minimum_required(VERSION 3.29)
+project(Project-sqlite-orm)
 
 set(CMAKE_CXX_STANDARD 20)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/sqlite3 ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_orm/include)
 
-include_directories(C:/dev/vcpkg/installed/x64-windows/include)
-link_directories(C:/dev/vcpkg/installed/x64-windows/lib)
-
-# Déclarez votre exécutable
-add_executable(mysql_connector main.cpp)
-
-target_link_libraries(mysql_connector PRIVATE sqlite3)
+add_subdirectory(sqlite3)
+# Add the executable
+add_executable(Project-sqlite-orm main.cpp)
+# Link the sqlite3 library to the executable
+target_link_libraries(Project-sqlite-orm PRIVATE sqlite3)
